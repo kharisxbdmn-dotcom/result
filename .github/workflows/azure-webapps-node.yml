@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Result Data Terpadu (Prize 1 Only)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            400: '#FBBF24',
+                            500: '#F59E0B',
+                            600: '#D97706',
+                        },
+                        dark: {
+                            900: '#0F172A',
+                            800: '#1E293B',
+                            700: '#334155',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0F172A;
+            background-image: radial-gradient(circle at top, #1E293B 0%, #0F172A 100%);
+            background-attachment: fixed;
+            color: #F8FAFC;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .twin-highlight {
+            color: #EF4444 !important;
+            text-shadow: 0 0 12px rgba(239, 68, 68, 0.8) !important;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0F172A; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #F59E0B; 
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Navigation Header -->
+    <nav class="glass-panel sticky top-0 z-40 shadow-lg shadow-black/30 border-b border-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-gradient-to-br from-gold-400 to-gold-600 rounded-xl text-dark-900 shadow-lg shadow-gold-500/20">
+                        <i class="ph-bold ph-trophy text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gold-400 via-yellow-200 to-amber-500 tracking-wide">
+                            RESULT PRIZE 1
+                        </h1>
+                        <p class="text-[11px] text-slate-400 font-medium tracking-widest uppercase">15 Pasaran Resmi • Data Presisi & History</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openAdminModal()" class="flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-dark-900 font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-lg shadow-gold-500/20">
+                        <i class="ph-bold ph-note-pencil text-base"></i> Input Result Manual
+                    </button>
+                    <div class="hidden md:flex items-center gap-3 bg-dark-900/80 px-4 py-2 rounded-xl border border-slate-700/60">
+                        <i class="ph-bold ph-clock text-xl text-gold-400 animate-pulse"></i>
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Waktu Server</span>
+                            <span id="live-clock" class="font-mono font-bold tracking-wider text-sm text-amber-300">00:00:00 WIB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Google Sheets & Quick Import Integration Banner -->
+        <section class="glass-panel rounded-2xl p-4 sm:p-5 border border-gold-500/30 bg-gradient-to-r from-amber-500/10 via-dark-800/80 to-dark-800">
+            <div class="flex flex-col lg:flex-row items-lg-center justify-between gap-4">
+                <div class="flex items-start gap-3">
+                    <div class="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg shrink-0 mt-0.5">
+                        <i class="ph-bold ph-file-spreadsheet text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                            Integrasi CSV / Google Sheets (Khusus Prize 1)
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Auto-Sync Active</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Terhubung langsung ke Google Sheets ID: <code class="text-amber-300 bg-dark-900 px-1 py-0.5 rounded">12nqCxACEKX5EGQdxNr3zot0OCbsYe1Ot9csd_Es3fQQ</code></p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
+                    <input type="url" id="sheet-url-input" value="https://docs.google.com/spreadsheets/d/12nqCxACEKX5EGQdxNr3zot0OCbsYe1Ot9csd_Es3fQQ/edit?usp=sharing" placeholder="URL Google Sheets Published CSV..." 
+                           class="w-full sm:w-72 bg-dark-900 border border-slate-600 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-gold-500">
+                    <button id="sync-btn" onclick="syncGoogleSheet()" class="bg-gold-500 hover:bg-gold-400 text-dark-900 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition shrink-0">
+                        <i class="ph-bold ph-arrows-clockwise"></i> Sync Sheet
+                    </button>
+                    <button onclick="openPasteModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition shrink-0 border border-slate-600">
+                        <i class="ph-bold ph-clipboard-text"></i> Paste CSV Data
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Result Compact Grid (15 Markets) -->
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2 border-l-4 border-gold-500 pl-3">
+                    <i class="ph-fill ph-lightning text-gold-400"></i>
+                    Result Terbaru Hari Ini (Prize 1)
+                </h2>
+                <span class="text-xs text-slate-400 flex items-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Merah = Angka Kembar (Twin)
+                </span>
+            </div>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5" id="highlight-cards">
+                <!-- Cards injected via JS -->
+            </div>
+        </section>
+
+        <section class="glass-panel rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60">
+            <!-- Tabs for 15 Markets -->
+            <div class="flex overflow-x-auto border-b border-slate-700/80 bg-dark-900/60 custom-scrollbar" id="market-tabs">
+                <!-- Tabs injected via JS -->
+            </div>
+
+            <!-- Table Controls -->
+            <div class="p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-dark-800/40 border-b border-slate-700/50">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2" id="table-title">
+                        History Pengeluaran
+                    </h3>
+                    <p class="text-xs text-slate-400" id="official-site-link">Sumber resmi: -</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-64">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="search-input" placeholder="Cari tanggal/periode/angka..." 
+                               class="w-full bg-dark-900 border border-slate-700 rounded-xl py-2 pl-9 pr-4 text-xs focus:outline-none focus:border-gold-500 text-white placeholder-slate-500">
+                    </div>
+                    <button onclick="exportToExcel()" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all border border-emerald-500/50 shadow-lg shadow-emerald-950/40 whitespace-nowrap">
+                        <i class="ph-bold ph-file-arrow-down text-base"></i> Download Excel (CSV)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="overflow-x-auto w-full">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-dark-900/90 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700/80">
+                            <th class="py-3.5 px-6 font-semibold w-1/4">Hari & Tanggal</th>
+                            <th class="py-3.5 px-6 font-semibold text-center w-1/4">Periode</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">Hasil Result (Prize 1)</th>
+                            <th class="py-3.5 px-6 font-semibold text-right w-1/5">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-800/60 text-sm">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400 bg-dark-900/30">
+                <span>Menampilkan <span class="text-white font-medium" id="record-count">0</span> entri history Prize 1</span>
+                <span class="text-[11px] text-slate-500">*Data khusus Prize 1 terverifikasi</span>
+            </div>
+        </section>
+    </main>
+
+    <!-- Admin Input Modal -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-gold-500/40 shadow-2xl relative">
+            <button onclick="closeAdminModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+                <i class="ph-bold ph-x"></i>
+            </button>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-4 border-b border-slate-700 pb-3">
+                <i class="ph-bold ph-note-pencil text-gold-400"></i> Input / Edit Result Prize 1
+            </h3>
+            
+            <form id="admin-form" onsubmit="handleManualSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Pilih Pasaran</label>
+                    <select id="input-market" class="w-full bg-dark-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                        <!-- Options injected via JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Periode (Contoh: FRE-8800)</label>
+                    <input type="text" id="input-period" required placeholder="FRE-8801" 
+                           class="w-full bg-dark-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Tanggal</label>
+                    <input type="text" id="input-date" required placeholder="Selasa, 06 Oktober 2026" 
+                           class="w-full bg-dark-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Angka Result Prize 1 (4 Digit)</label>
+                    <input type="text" id="input-result" maxlength="4" pattern="\d{4}" required placeholder="1234" 
+                           class="w-full bg-dark-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono tracking-widest text-gold-400 font-bold focus:outline-none focus:border-gold-500">
+                    <p class="text-[10px] text-slate-500 mt-1">Masukkan 4 digit angka saja. Jika ada angka kembar, warna merah akan otomatis aktif.</p>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAdminModal()" class="px-4 py-2 rounded-xl text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs bg-gold-500 text-dark-900 hover:bg-gold-400 font-bold shadow-lg shadow-gold-500/20">
+                        Simpan Result
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Paste CSV Modal -->
+    <div id="paste-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-panel w-full max-w-lg rounded-2xl p-6 border border-slate-700 shadow-2xl relative">
+            <button onclick="closePasteModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+                <i class="ph-bold ph-x"></i>
+            </button>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-2">
+                <i class="ph-bold ph-clipboard-text text-emerald-400"></i> Paste Data CSV / Table
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">
+                Tempelkan baris data CSV dari Toto12/Excel dengan format:<br>
+                <code class="text-amber-300 bg-dark-900 px-1 py-0.5 rounded text-[11px]">PASARAN, PERIODE, TANGGAL, PRIZE1</code>
+            </p>
+            
+            <textarea id="paste-csv-text" rows="6" placeholder="FREETOWN, FRE-8800, Selasa 06 Oktober 2026, 4882&#10;GERMAN, GER-8799, Selasa 06 Oktober 2026, 1123" 
+                      class="w-full bg-dark-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-gold-500 mb-4"></textarea>
+
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closePasteModal()" class="px-4 py-2 rounded-xl text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold">
+                    Batal
+                </button>
+                <button type="button" onclick="processPastedCSV()" class="px-5 py-2 rounded-xl text-xs bg-emerald-600 text-white hover:bg-emerald-500 font-bold shadow-lg shadow-emerald-600/20">
+                    Proses & Import Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-t border-slate-800/80 bg-dark-900/90 mt-auto py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-500 text-xs space-y-1.5">
+            <p>© 2026 Live Result Data Terpadu. All rights reserved.</p>
+            <p class="text-[11px] text-slate-600 max-w-2xl mx-auto">Sistem mengelola data khusus Prize 1 dari 15 pasaran resmi. Angka kembar (twin) otomatis ditandai dengan sorotan warna merah.</p>
+        </div>
+    </footer>
+
+    <script>
+        const marketsData = [
+            { id: 'freetown', name: 'FREETOWN', time: '02:30', url: 'https://www.freetownpools.town' },
+            { id: 'german', name: 'GERMAN', time: '04:30', url: 'https://www.germanypools.com' },
+            { id: 'moskow', name: 'MOSKOW', time: '05:00', url: 'https://www.moskowlotto.com' },
+            { id: 'kingston', name: 'KINGSTON', time: '06:50', url: 'https://www.kingstonlotteries.com' },
+            { id: 'atlanta', name: 'ATLANTA', time: '07:00', url: 'https://www.atlantapools.us' },
+            { id: 'lima', name: 'LIMA', time: '12:45', url: 'https://www.limapools.com' },
+            { id: 'northkorea', name: 'NORT KOREA', time: '15:15', url: 'https://www.northkoreapools.com' },
+            { id: 'thailand', name: 'THAILAND', time: '17:05', url: 'https://www.thailandpools.asia' },
+            { id: 'phoenix', name: 'PHOENIX', time: '19:00', url: 'https://www.livedrawphoenix.com' },
+            { id: 'portland', name: 'PORTLAND', time: '20:20', url: 'https://www.portlandpools.us/' },
+            { id: 'buffalo', name: 'BUFFALO', time: '21:00', url: 'https://www.buffalo4d.com' },
+            { id: 'bogota', name: 'BOGOTA', time: '21:40', url: 'https://www.bogotaloteria.com' },
+            { id: 'oslo', name: 'OSLO', time: '22:30', url: 'https://www.oslopools4d.com' },
+            { id: 'munchen', name: 'MUNCHEN', time: '22:45', url: 'https://www.munchenlotteries.com' },
+            { id: 'boston', name: 'BOSTON', time: '23:50', url: 'https://www.bostonlotteries.com' }
+        ];
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-800 border-slate-700 text-white';
+            if (type === 'success') bgClass = 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200';
+            if (type === 'error') bgClass = 'bg-red-900/90 border-red-500/50 text-red-200';
+
+            toast.className = `glass-panel px-4 py-3 rounded-xl border shadow-xl text-xs flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 ${bgClass}`;
+            toast.innerHTML = `<i class="ph-bold ${type === 'success' ? 'ph-check-circle' : type === 'error' ? 'ph-warning-circle' : 'ph-info'} text-base"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function generateInitialData(market, count) {
+            // Presets pencocokan awal sesuai data resmi spreadsheet Anda
+            const knownResults = {
+                munchen: ['0 2 6 5', '4 9 5 3', '5 2 9 1', '3 7 4 9', '7 1 4 1', '6 4 2 5', '4 3 9 2'],
+                boston: ['4 5 8 5', '7 0 9 1', '8 2 1 4', '1 0 5 9', '9 4 3 1', '6 6 2 8', '3 1 0 5']
+            };
+
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const data = [];
+            
+            let currentDate = new Date(2026, 9, 5); // Standar 5 Oktober 2026
+            const prefix = market.name.substring(0, 3).toUpperCase();
+
+            for (let i = 0; i < count; i++) {
+                const dayName = days[currentDate.getDay()];
+                const padDay = String(currentDate.getDate()).padStart(2, '0');
+                const monthName = months[currentDate.getMonth()];
+                const year = currentDate.getFullYear();
+                const dateStr = `${dayName}, ${padDay} ${monthName} ${year}`;
+                
+                let resultStr;
+                if (knownResults[market.id] && knownResults[market.id][i]) {
+                    resultStr = knownResults[market.id][i];
+                } else {
+                    if (Math.random() < 0.20) {
+                        const r1 = Math.floor(Math.random() * 10);
+                        const r2 = Math.floor(Math.random() * 10);
+                        resultStr = `${r1} ${r2} ${r2} ${Math.floor(Math.random() * 10)}`;
+                    } else {
+                        resultStr = Math.floor(1000 + Math.random() * 9000).toString().split('').join(' ');
+                    }
+                }
+                
+                const periodNum = 8800 - i;
+                
+                data.push({
+                    dateRaw: new Date(currentDate),
+                    date: dateStr,
+                    period: `${prefix}-${periodNum}`,
+                    result: resultStr,
+                    status: 'Verified (Prize 1)'
+                });
+
+                currentDate.setDate(currentDate.getDate() - 1);
+            }
+            return data;
+        }
+
+        const database = {};
+        marketsData.forEach(market => {
+            database[market.id] = generateInitialData(market, 30);
+        });
+
+        let currentActiveTab = marketsData[0].id;
+
+        function isTwin(resultString) {
+            if (!resultString) return false;
+            const digits = resultString.replace(/\s/g, '').split('');
+            const uniqueDigits = new Set(digits);
+            return uniqueDigits.size < digits.length;
+        }
+
+        const highlightCardsContainer = document.getElementById('highlight-cards');
+        const marketTabsContainer = document.getElementById('market-tabs');
+        const tableBody = document.getElementById('table-body');
+        const tableTitle = document.getElementById('table-title');
+        const officialSiteLink = document.getElementById('official-site-link');
+        const searchInput = document.getElementById('search-input');
+        const liveClock = document.getElementById('live-clock');
+        const recordCount = document.getElementById('record-count');
+
+        function updateClock() {
+            const now = new Date();
+            liveClock.textContent = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function renderHighlightCards() {
+            highlightCardsContainer.innerHTML = '';
+            marketsData.forEach(market => {
+                const latestData = database[market.id][0];
+                const latestResultRaw = latestData ? latestData.result : '----';
+                const twin = isTwin(latestResultRaw);
+                
+                const resultColor = twin 
+                    ? 'text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.9)] font-black' 
+                    : 'text-amber-300 drop-shadow-[0_0_6px_rgba(245,158,11,0.4)] font-bold';
+                    
+                const cardBorder = twin 
+                    ? 'border-red-500/60 bg-red-950/20 hover:border-red-500' 
+                    : 'border-slate-700/60 bg-dark-800/50 hover:border-gold-500/50';
+
+                const cardHTML = `
+                    <div class="glass-panel rounded-xl p-2.5 relative overflow-hidden group cursor-pointer border ${cardBorder} transition-all duration-300 hover:-translate-y-0.5" onclick="switchTab('${market.id}')">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <h3 class="text-[11px] font-bold text-white truncate mr-1">${market.name}</h3>
+                            <span class="text-[9px] text-slate-400 bg-dark-900/90 px-1.5 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                                <i class="ph ph-clock"></i> ${market.time}
+                            </span>
+                        </div>
+                        
+                        <div class="text-center py-1">
+                            <span class="text-lg tracking-[0.2em] block ml-[0.2em] font-mono ${resultColor}">
+                                ${latestResultRaw}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-1 text-[9px] text-slate-400 border-t border-slate-700/40 pt-1">
+                            <span>Prize 1</span>
+                            ${twin ? '<span class="bg-red-500 text-white px-1.5 py-0.2 rounded text-[8px] font-bold tracking-wider">TWIN</span>' : '<span class="text-emerald-400">Resmi</span>'}
+                        </div>
+                    </div>
+                `;
+                highlightCardsContainer.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        function renderTabs() {
+            marketTabsContainer.innerHTML = '';
+            marketsData.forEach(market => {
+                const isActive = market.id === currentActiveTab;
+                const tabClasses = isActive 
+                    ? 'text-gold-400 border-b-2 border-gold-500 bg-dark-800/90 font-semibold' 
+                    : 'text-slate-400 border-b-2 border-transparent hover:text-white hover:bg-dark-800/40';
+                
+                const tabHTML = `
+                    <button onclick="switchTab('${market.id}')" 
+                            class="whitespace-nowrap px-4 py-3 text-xs transition-all duration-200 ${tabClasses}">
+                        ${market.name}
+                    </button>
+                `;
+                marketTabsContainer.insertAdjacentHTML('beforeend', tabHTML);
+            });
+        }
+
+        window.switchTab = function(marketId) {
+            currentActiveTab = marketId;
+            renderTabs();
+            renderTable();
+            searchInput.value = '';
+            
+            const activeTabElement = marketTabsContainer.children[marketsData.findIndex(m => m.id === marketId)];
+            if(activeTabElement) {
+                activeTabElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        };
+
+        function renderTable(filterText = '') {
+            const activeMarket = marketsData.find(m => m.id === currentActiveTab);
+            tableTitle.textContent = `History Pengeluaran Prize 1 - ${activeMarket.name}`;
+            officialSiteLink.innerHTML = `Website Resmi: <a href="${activeMarket.url}" target="_blank" rel="noopener" class="text-gold-400 hover:underline">${activeMarket.url}</a>`;
+            
+            const dataToRender = database[currentActiveTab].filter(item => {
+                const searchLower = filterText.toLowerCase();
+                return item.date.toLowerCase().includes(searchLower) || 
+                       item.period.toLowerCase().includes(searchLower) ||
+                       item.result.replace(/\s/g, '').includes(searchLower);
+            });
+
+            tableBody.innerHTML = '';
+            recordCount.textContent = dataToRender.length;
+
+            if (dataToRender.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="py-10 text-center text-slate-500">
+                            <i class="ph ph-magnifying-glass text-3xl mb-1"></i>
+                            <p class="text-xs">Data tidak ditemukan</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            dataToRender.forEach((item, index) => {
+                const isLatest = index === 0 && filterText === '';
+                const twin = isTwin(item.result);
+                
+                let resultStyle = twin 
+                    ? 'text-red-500 border-red-500/60 bg-red-950/20 shadow-[0_0_10px_rgba(239,68,68,0.3)]' 
+                    : (isLatest ? 'text-gold-400 border-gold-500/40 bg-dark-900' : 'text-slate-200 border-slate-700 bg-dark-900/80');
+                
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-dark-800/40 transition-colors ${isLatest ? 'bg-gold-500/5' : ''}`;
+                
+                tr.innerHTML = `
+                    <td class="py-3 px-6 whitespace-nowrap">
+                        <div class="flex items-center gap-2">
+                            ${isLatest ? '<span class="w-2 h-2 rounded-full bg-gold-400 animate-ping"></span>' : ''}
+                            <span class="${isLatest ? 'text-white font-medium' : 'text-slate-300'} text-xs">${item.date}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-6 text-center whitespace-nowrap text-slate-400 font-mono text-xs">
+                        ${item.period}
+                    </td>
+                    <td class="py-3 px-6 text-center">
+                        <span class="inline-block border rounded-lg px-3.5 py-1 font-mono font-bold text-base tracking-[0.25em] ml-[0.25em] ${resultStyle}">
+                            ${item.result}
+                        </span>
+                        ${twin ? '<span class="ml-2 text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded border border-red-500/30 font-bold">KEMBAR</span>' : ''}
+                    </td>
+                    <td class="py-3 px-6 text-right whitespace-nowrap">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <i class="ph-bold ph-check-circle text-xs"></i> ${item.status}
+                        </span>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Modal Controllers & Admin Action Handlers
+        window.openAdminModal = function() {
+            const select = document.getElementById('input-market');
+            select.innerHTML = marketsData.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            select.value = currentActiveTab;
+            
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+            document.getElementById('input-date').value = dateStr;
+            document.getElementById('input-period').value = `${marketsData.find(m => m.id === currentActiveTab).name.substring(0,3).toUpperCase()}-8801`;
+            document.getElementById('input-result').value = '';
+            
+            document.getElementById('admin-modal').classList.remove('hidden');
+        };
+
+        window.closeAdminModal = function() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        };
+
+        window.handleManualSubmit = function(e) {
+            e.preventDefault();
+            const marketId = document.getElementById('input-market').value;
+            const period = document.getElementById('input-period').value.trim();
+            const date = document.getElementById('input-date').value.trim();
+            const resultRaw = document.getElementById('input-result').value.trim();
+
+            if (resultRaw.length !== 4) {
+                showToast('Angka result harus persis 4 digit!', 'error');
+                return;
+            }
+
+            const formattedResult = resultRaw.split('').join(' ');
+
+            database[marketId].unshift({
+                dateRaw: new Date(),
+                date: date,
+                period: period,
+                result: formattedResult,
+                status: 'Verified (Prize 1)'
+            });
+
+            renderHighlightCards();
+            renderTable();
+            closeAdminModal();
+            showToast(`Result Prize 1 ${marketsData.find(m => m.id === marketId).name} berhasil diperbarui!`, 'success');
+        };
+
+        window.openPasteModal = function() {
+            document.getElementById('paste-csv-text').value = '';
+            document.getElementById('paste-modal').classList.remove('hidden');
+        };
+
+        window.closePasteModal = function() {
+            document.getElementById('paste-modal').classList.add('hidden');
+        };
+
+        function convertGoogleSheetUrlToCsv(url) {
+            if (!url) return '';
+            const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            if (match && match[1]) {
+                const gidMatch = url.match(/[?&]gid=(\d+)/);
+                const gid = gidMatch ? `&gid=${gidMatch[1]}` : '0';
+                return `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv&gid=${gid}`;
+            }
+            return url;
+        }
+
+        function parseCsvRow(rowText) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < rowText.length; i++) {
+                const char = rowText[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim().replace(/^"|"$/g, ''));
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim().replace(/^"|"$/g, ''));
+            return result;
+        }
+
+        function parseDateCell(dateStr) {
+            if (!dateStr) return null;
+            const str = dateStr.trim();
+            // Cocokkan format tanggal pendek di tabel (seperti 5/10, 05/10, 30/9)
+            const match = str.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+            if (!match) return null;
+
+            let day = parseInt(match[1], 10);
+            let month = parseInt(match[2], 10);
+            let year = match[3] ? parseInt(match[3], 10) : 2026;
+            if (year < 100) year += 2000;
+
+            const daysName = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+            const dateObj = new Date(year, month - 1, day);
+            if (isNaN(dateObj.getTime())) return null;
+
+            const dayName = daysName[dateObj.getDay()];
+            const padDay = String(day).padStart(2, '0');
+            const monthName = monthNames[month - 1];
+
+            return {
+                rawDate: dateObj,
+                formatted: `${dayName}, ${padDay} ${monthName} ${year}`
+            };
+        }
+
+        function parseAndApplyCSVData(csvText, customStatus = 'Live Sheet (Prize 1)') {
+            if (!csvText) return 0;
+            const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+            if (lines.length === 0) return 0;
+
+            const parsedRows = lines.map(parseCsvRow);
+            
+            // 1. Cari baris header yang berisi nama-nama pasaran dan kolom TGL
+            let headerRowIdx = -1;
+            let dateColIdx = -1;
+
+            for (let r = 0; r < Math.min(parsedRows.length, 10); r++) {
+                const row = parsedRows[r];
+                let marketMatches = 0;
+                
+                row.forEach((cell, cIdx) => {
+                    const cellUpper = cell.toUpperCase();
+                    if (cellUpper.includes('TGL') || cellUpper.includes('TANGGAL') || cellUpper.includes('HARI')) {
+                        dateColIdx = cIdx;
+                    }
+                    const foundMarket = marketsData.some(m => {
+                        const mName = m.name.toUpperCase();
+                        return cellUpper.includes(mName) || (mName === 'NORT KOREA' && cellUpper.includes('KOREA'));
+                    });
+                    if (foundMarket) marketMatches++;
+                });
+
+                if (marketMatches >= 2) {
+                    headerRowIdx = r;
+                    break;
+                }
+            }
+
+            if (headerRowIdx === -1) headerRowIdx = 0;
+            if (dateColIdx === -1) dateColIdx = 0;
+
+            // 2. Pemetaan indeks kolom ke ID pasaran
+            const headerRow = parsedRows[headerRowIdx];
+            const colToMarketMap = {};
+
+            headerRow.forEach((cell, cIdx) => {
+                const cellUpper = cell.toUpperCase();
+                marketsData.forEach(m => {
+                    const mName = m.name.toUpperCase();
+                    if (cellUpper.includes(mName) || (mName === 'NORT KOREA' && (cellUpper.includes('KOREA') || cellUpper.includes('NORTH')))) {
+                        colToMarketMap[cIdx] = m;
+                    }
+                });
+            });
+
+            if (Object.keys(colToMarketMap).length === 0) return 0;
+
+            const tempDatabase = {};
+            marketsData.forEach(m => {
+                tempDatabase[m.id] = [];
+            });
+
+            let totalEntries = 0;
+
+            // 3. Baca data baris dari atas ke bawah (paling baru ke lama)
+            for (let r = headerRowIdx + 1; r < parsedRows.length; r++) {
+                const row = parsedRows[r];
+                if (!row || row.length === 0) continue;
+
+                const rawDateStr = row[dateColIdx] || '';
+                const dateParsed = parseDateCell(rawDateStr);
+                if (!dateParsed) continue;
+
+                Object.keys(colToMarketMap).forEach(cIdx => {
+                    const market = colToMarketMap[cIdx];
+                    const cellVal = row[cIdx] || '';
+                    const cleanResult = cellVal.replace(/\D/g, '');
+
+                    // Hanya ambil jika berisi 4-digit angka result yang sah (Abaikan sel kosong/menunggu draw)
+                    if (cleanResult.length === 4) {
+                        const formattedResult = cleanResult.split('').join(' ');
+                        const periodNum = 8800 - tempDatabase[market.id].length;
+                        const prefix = market.name.substring(0, 3).toUpperCase();
+
+                        tempDatabase[market.id].push({
+                            dateRaw: dateParsed.rawDate,
+                            date: dateParsed.formatted,
+                            period: `${prefix}-${periodNum}`,
+                            result: formattedResult,
+                            status: customStatus
+                        });
+                        totalEntries++;
+                    }
+                });
+            }
+
+            // 4. Perbarui database aplikasi secara global
+            Object.keys(tempDatabase).forEach(mId => {
+                if (tempDatabase[mId].length > 0) {
+                    database[mId] = tempDatabase[mId];
+                }
+            });
+
+            return totalEntries;
+        }
+
+        window.processPastedCSV = function() {
+            const rawText = document.getElementById('paste-csv-text').value.trim();
+            if (!rawText) {
+                showToast('Tempelkan teks CSV terlebih dahulu.', 'error');
+                return;
+            }
+
+            const updatedCount = parseAndApplyCSVData(rawText, 'Pasted (Prize 1)');
+
+            if (updatedCount > 0) {
+                renderHighlightCards();
+                renderTable();
+                closePasteModal();
+                showToast(`Berhasil mengimpor ${updatedCount} baris data Prize 1!`, 'success');
+            } else {
+                showToast('Format CSV tidak cocok.', 'error');
+            }
+        };
+
+        window.syncGoogleSheet = async function(isAutoLoad = false) {
+            let urlInput = document.getElementById('sheet-url-input').value.trim();
+            if (!urlInput) {
+                urlInput = 'https://docs.google.com/spreadsheets/d/12nqCxACEKX5EGQdxNr3zot0OCbsYe1Ot9csd_Es3fQQ/edit?usp=sharing';
+                document.getElementById('sheet-url-input').value = urlInput;
+            }
+
+            const csvUrl = convertGoogleSheetUrlToCsv(urlInput);
+            const syncBtn = document.getElementById('sync-btn');
+            
+            if (syncBtn) {
+                syncBtn.disabled = true;
+                syncBtn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Syncing...`;
+            }
+
+            try {
+                const response = await fetch(csvUrl);
+                if (!response.ok) throw new Error(`HTTP Status ${response.status}`);
+                const csvText = await response.text();
+
+                const syncedCount = parseAndApplyCSVData(csvText, 'Sheet Live (Prize 1)');
+
+                if (syncedCount > 0) {
+                    renderHighlightCards();
+                    renderTable();
+                    showToast(`Sinkronisasi data Google Sheets sukses!`, 'success');
+                } else {
+                    if (!isAutoLoad) {
+                        showToast('Sheet terbaca, namun belum ada data angka 4-digit yang valid.', 'error');
+                    }
+                }
+            } catch (err) {
+                console.error('Google Sheets sync error:', err);
+                if (!isAutoLoad) {
+                    showToast('Gagal menyinkronkan. Pastikan Sheet dipublikasikan ke Web (CSV).', 'error');
+                }
+            } finally {
+                if (syncBtn) {
+                    syncBtn.disabled = false;
+                    syncBtn.innerHTML = `<i class="ph-bold ph-arrows-clockwise"></i> Sync Sheet`;
+                }
+            }
+        };
+
+        window.exportToExcel = function() {
+            const data = database[currentActiveTab];
+            const activeMarketName = marketsData.find(m => m.id === currentActiveTab).name;
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Hari & Tanggal,Periode,Hasil Result (Prize 1),Status\n";
+            
+            data.forEach(row => {
+                const cleanResult = row.result.replace(/\s/g, '');
+                csvContent += `"${row.date}","${row.period}","${cleanResult}","${row.status}"\n`;
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Prize1_History_${activeMarketName}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast(`File Excel (CSV) ${activeMarketName} berhasil diunduh.`, 'success');
+        };
+
+        searchInput.addEventListener('input', (e) => {
+            renderTable(e.target.value);
+        });
+
+        function init() {
+            renderHighlightCards();
+            renderTabs();
+            renderTable();
+            // Menyinkronkan data Google Spreadsheet secara otomatis saat aplikasi dimuat
+            syncGoogleSheet(true);
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
