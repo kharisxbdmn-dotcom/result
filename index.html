@@ -1,0 +1,24 @@
+async function syncWithGoogleAppsScript() {
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbxLyLqAuQZBzM9ATHrAo_5qWcY7v-vMZcT83LOESpPVopZozotq2ALUNcFQyzCHXX1L/exec";
+
+    try {
+        const response = await fetch(webAppUrl);
+        const result = await response.json();
+
+        if (result.status === "success") {
+            // Memperbarui database lokal dengan data dari JSON Apps Script
+            Object.keys(result.data).forEach(marketId => {
+                const normalizedId = marketId.toLowerCase().replace(/\s+/g, '');
+                if (database[normalizedId]) {
+                    database[normalizedId] = result.data[marketId];
+                }
+            });
+
+            renderHighlightCards();
+            renderTable();
+            showToast("Data Prize 1 berhasil diperbarui dari Google Apps Script!", "success");
+        }
+    } catch (err) {
+        console.error("Gagal mengambil data dari Apps Script:", err);
+    }
+}
